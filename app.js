@@ -20,7 +20,7 @@ async function dbDel(k) { const d = await db(); return new Promise((res, rej) =>
 const STORE_BILLING = 'https://store.microsoft.com/billing';
 const PRO_SKU = 'resumepress_pro';
 const PRO_IDS = [PRO_SKU];
-let STORE_URL = 'https://apps.microsoft.com/search/publisher?name=NTQ37';
+let STORE_URL = 'https://apps.microsoft.com/detail/9NRFXK36T685';
 let proAvailable = false, proSku = PRO_SKU, isPro = false;
 try { isPro = localStorage.getItem('resumepress-pro') === '1'; } catch (_) {}
 const TRIAL_DAYS = 7, DAY = 86400000;
