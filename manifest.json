@@ -1,0 +1,18 @@
+{
+  "id": "./index.html",
+  "name": "ResumePress - Resume Builder",
+  "short_name": "ResumePress",
+  "description": "Build a professional resume and matching cover letter. 8 templates, resume checker, job keyword match, example bullets and an application tracker. Print or save as PDF. Private, offline, no subscription.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#f4f5f9",
+  "theme_color": "#3b4fb8",
+  "categories": ["productivity", "business", "education"],
+  "icons": [
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any"},
+    {"src": "icon-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+}

@@ -1,0 +1,117 @@
+/* ResumePress – document styles (preview and print). Sizes in pt/in so print matches the preview. */
+.resume { --rc: #2f4b7c; --rf: 'Segoe UI', Arial, sans-serif; --rz: 1; font-family: var(--rf); font-size: calc(10.4pt * var(--rz)); line-height: 1.38; color: #1f2328; background: #fff; padding: 0.55in 0.62in; box-sizing: border-box; }
+.resume * { box-sizing: border-box; }
+.resume h1 { font-size: 2.15em; line-height: 1.1; margin: 0; font-weight: 700; letter-spacing: -.01em; color: #111; }
+.resume .r-title { font-size: 1.15em; color: var(--rc); font-weight: 600; margin-top: 2pt; }
+.resume .r-contact { font-size: .93em; color: #444; margin-top: 5pt; display: flex; flex-wrap: wrap; gap: 0 6pt; }
+.resume .r-contact .sep { color: #aaa; }
+.resume .r-top { display: flex; gap: 14pt; align-items: center; margin-bottom: 10pt; }
+.resume .r-top.center { flex-direction: column; text-align: center; gap: 0; }
+.resume .r-top.center .r-contact { justify-content: center; }
+.resume .r-photo { width: 0.95in; height: 0.95in; border-radius: 50%; object-fit: cover; flex: none; }
+.resume .r-sec { margin-top: 10pt; }
+.resume h2 { font-size: 1.02em; text-transform: uppercase; letter-spacing: .09em; margin: 0 0 5pt; color: var(--rc); font-weight: 700; border-bottom: 1px solid #cfd4da; padding-bottom: 2pt; }
+.resume .r-item { margin-bottom: 7pt; break-inside: avoid; page-break-inside: avoid; }
+.resume .r-row { display: flex; justify-content: space-between; gap: 10pt; align-items: baseline; }
+.resume .r-head { font-size: 1.04em; }
+.resume .r-when, .resume .r-where { color: #555; font-size: .93em; white-space: nowrap; }
+.resume .r-sub { color: #333; font-style: italic; }
+.resume ul { margin: 3pt 0 0; padding-left: 14pt; }
+.resume li { margin: 1.5pt 0; }
+.resume p { margin: 0 0 4pt; }
+.resume .r-skills { display: flex; flex-wrap: wrap; gap: 4pt 6pt; }
+.resume .r-chip { border: 1px solid #c9ced5; border-radius: 3pt; padding: 1pt 6pt; font-size: .95em; }
+.resume .r-skills.lv { display: grid; grid-template-columns: 1fr; gap: 3pt; }
+.resume .r-skill { display: flex; justify-content: space-between; align-items: center; gap: 8pt; }
+.resume .dots { display: inline-flex; gap: 2.5pt; }
+.resume .dots i { width: 6.5pt; height: 6.5pt; border-radius: 50%; background: #d7dbe0; display: inline-block; }
+.resume .dots i.on { background: var(--rc); }
+.resume .r-langs { display: flex; flex-wrap: wrap; gap: 3pt 14pt; }
+.resume .r-lang span { color: #555; }
+.resume a { color: inherit; text-decoration: none; }
+
+/* Classic */
+.t-classic h1 { font-size: 2.05em; }
+.t-classic h2 { color: #111; border-bottom: 1.4pt solid #111; }
+.t-classic .r-title { color: #333; }
+.t-classic .r-chip { border: 0; padding: 0; }
+.t-classic .r-chip:not(:last-child)::after { content: ','; }
+
+/* Modern */
+.t-modern h1 { color: var(--rc); }
+.t-modern h2 { border: 0; padding-left: 7pt; border-left: 3.5pt solid var(--rc); color: #222; }
+.t-modern .r-chip { background: color-mix(in srgb, var(--rc) 12%, white); border-color: transparent; }
+
+/* Minimal */
+.t-minimal { padding: 0.7in 0.75in; }
+.t-minimal h1 { font-weight: 300; font-size: 2.3em; letter-spacing: .02em; }
+.t-minimal .r-title { color: #666; font-weight: 400; }
+.t-minimal h2 { border: 0; color: #888; font-weight: 600; font-size: .9em; letter-spacing: .18em; margin-bottom: 4pt; }
+.t-minimal .r-sec { margin-top: 13pt; }
+.t-minimal .r-chip { border: 0; padding: 0; color: #333; }
+.t-minimal .r-chip:not(:last-child)::after { content: ' ·'; color: #aaa; }
+.t-minimal .r-sub { font-style: normal; color: #666; }
+
+/* Sidebar (two columns) */
+.t-sidebar { padding: 0; }
+.t-sidebar .r-cols { display: grid; grid-template-columns: 2.35in 1fr; min-height: inherit; }
+.t-sidebar .r-side { background: var(--rc); color: #fff; padding: 0.5in 0.28in; }
+.t-sidebar .r-side h1 { color: #fff; font-size: 1.75em; }
+.t-sidebar .r-side .r-title { color: rgba(255,255,255,.85); }
+.t-sidebar .r-side .r-contact { color: rgba(255,255,255,.92); display: block; margin-top: 10pt; font-size: .9em; word-break: break-word; }
+.t-sidebar .r-side .r-contact div { margin-bottom: 3pt; }
+.t-sidebar .r-side h2 { color: #fff; border-bottom-color: rgba(255,255,255,.4); }
+.t-sidebar .r-side .r-photo { margin-bottom: 10pt; width: 1.2in; height: 1.2in; border: 3pt solid rgba(255,255,255,.35); }
+.t-sidebar .r-side .dots i { background: rgba(255,255,255,.3); }
+.t-sidebar .r-side .dots i.on { background: #fff; }
+.t-sidebar .r-side .r-sub, .t-sidebar .r-side .r-when, .t-sidebar .r-side .r-lang span { color: rgba(255,255,255,.8); }
+.t-sidebar .r-side .r-row { flex-direction: column; gap: 0; }
+.t-sidebar .r-side .r-langs { display: block; }
+.t-sidebar .r-main { padding: 0.5in 0.45in 0.5in 0.38in; }
+.t-sidebar .r-main .r-sec:first-child { margin-top: 0; }
+
+/* Executive */
+.t-executive { font-size: calc(10.6pt * var(--rz)); }
+.t-executive .r-top { border-bottom: 3pt double #333; padding-bottom: 8pt; }
+.t-executive h1 { font-weight: 600; letter-spacing: .06em; text-transform: uppercase; font-size: 1.95em; }
+.t-executive h2 { text-align: center; border: 0; color: #222; letter-spacing: .25em; position: relative; }
+.t-executive h2::before, .t-executive h2::after { content: ''; display: inline-block; width: 22%; height: 0; border-top: 1px solid #999; vertical-align: middle; margin: 0 8pt; }
+.t-executive .r-chip { border: 0; }
+
+/* Compact */
+.t-compact { font-size: calc(9.4pt * var(--rz)); padding: 0.42in 0.5in; line-height: 1.3; }
+.t-compact h1 { font-size: 1.9em; }
+.t-compact .r-top { margin-bottom: 6pt; }
+.t-compact .r-sec { margin-top: 7pt; }
+.t-compact h2 { background: color-mix(in srgb, var(--rc) 12%, white); border: 0; padding: 2pt 5pt; color: var(--rc); }
+.t-compact .r-item { margin-bottom: 5pt; }
+.t-compact .r-skills { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2pt 10pt; }
+.t-compact .r-chip { border: 0; padding: 0; }
+.t-compact .r-chip::before { content: '▪ '; color: var(--rc); }
+
+/* Bold header */
+.t-bold { padding: 0; }
+.t-bold .r-top.band { background: var(--rc); color: #fff; padding: 0.42in 0.6in; margin: 0; }
+.t-bold .r-top.band h1 { color: #fff; }
+.t-bold .r-top.band .r-title { color: rgba(255,255,255,.88); }
+.t-bold .r-top.band .r-contact { color: rgba(255,255,255,.92); }
+.t-bold .r-top.band .sep { color: rgba(255,255,255,.5); }
+.t-bold .r-photo { border: 3pt solid rgba(255,255,255,.4); }
+.t-bold .r-pad { padding: 0.15in 0.6in 0.5in; }
+.t-bold h2 { color: var(--rc); border-bottom: 2pt solid var(--rc); display: inline-block; padding-right: 10pt; }
+.t-bold .r-chip { background: var(--rc); color: #fff; border: 0; }
+
+/* Timeline */
+.t-timeline h1 { color: var(--rc); }
+.t-timeline h2 { border: 0; }
+.t-timeline .s-experience .r-item, .t-timeline .s-volunteer .r-item, .t-timeline .s-education .r-item { position: relative; padding-left: 15pt; border-left: 1.5pt solid color-mix(in srgb, var(--rc) 35%, white); margin-left: 4pt; padding-bottom: 4pt; margin-bottom: 0; }
+.t-timeline .s-experience .r-item::before, .t-timeline .s-volunteer .r-item::before, .t-timeline .s-education .r-item::before { content: ''; position: absolute; left: -5pt; top: 3pt; width: 8.5pt; height: 8.5pt; border-radius: 50%; background: #fff; border: 2pt solid var(--rc); }
+.t-timeline .r-chip { border-color: var(--rc); color: var(--rc); }
+
+/* cover letter */
+.resume.cover .c-date { margin: 14pt 0 10pt; color: #444; }
+.resume.cover .c-to { margin-bottom: 14pt; }
+.resume.cover .c-greet { margin: 0 0 8pt; }
+.resume.cover .c-body p { margin: 0 0 9pt; text-align: justify; }
+.resume.cover .c-close { margin-top: 12pt; }
+.resume.cover .r-top { margin-bottom: 4pt; }

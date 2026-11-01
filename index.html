@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>ResumePress – Resume Builder</title>
+  <meta name="description" content="Build a professional resume and cover letter on Windows. 8 templates, resume checker, job keyword match, example bullets and an application tracker. Print or save as PDF. Private, offline, no subscription.">
+  <meta name="theme-color" content="#3b4fb8">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon-192.png">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="resume.css">
+  <style id="pageRule"></style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><img src="icon-192.png" alt="" width="30" height="30"><span>ResumePress</span></div>
+    <nav class="tabs" id="tabs">
+      <button data-t="resume" class="on">✏️ Resume</button>
+      <button data-t="cover">✉️ Cover letter</button>
+      <button data-t="match">🎯 Job match</button>
+      <button data-t="apps">📋 Applications</button>
+    </nav>
+    <div class="top-btns">
+      <select id="docPick" title="Your resumes"></select>
+      <button id="moreBtn" class="tb">☰ More</button>
+      <button id="proBtn" class="pro-btn" hidden>★ Get Pro</button>
+    </div>
+    <div id="menu" class="menu" hidden>
+      <button id="newDocBtn">＋ New resume</button>
+      <button id="dupDocBtn">⧉ Duplicate this resume (for another job)</button>
+      <button id="renameDocBtn">✎ Rename this resume</button>
+      <button id="delDocBtn" class="danger">🗑 Delete this resume…</button>
+      <hr>
+      <button id="printBtn2">🖨 Print / save as PDF</button>
+      <button id="wordBtn">📄 Export to Word (.doc) ★</button>
+      <button id="txtBtn">📝 Export plain text (for online forms)</button>
+      <hr>
+      <button id="backupBtn">💾 Back up everything (.json)</button>
+      <button id="restoreFileBtn">📂 Restore a backup…</button>
+      <button id="sampleBtn">✨ Open a sample resume</button>
+      <hr>
+      <a href="help.html" target="_blank" rel="noopener">❓ How to use ResumePress</a>
+      <a href="why.html" target="_blank" rel="noopener">💡 Why ResumePress – compare</a>
+      <a href="mailto:thequan03072002@gmail.com?subject=ResumePress%20feedback">✉ Feedback &amp; support</a>
+    </div>
+    <input id="fileIn" type="file" hidden>
+  </header>
+
+  <!-- RESUME + COVER (shared layout: editor | preview) -->
+  <main class="pane" id="docPane">
+    <section class="side" id="editor"></section>
+    <section class="main-col prev-col">
+      <div class="prev-bar">
+        <button id="tplBtn" class="ghost">🎨 Template: <b id="tplName"></b></button>
+        <div class="swatches" id="swatches"></div>
+        <select id="fontSel" title="Font"></select>
+        <select id="sizeSel" title="Paper"><option value="letter">Letter</option><option value="a4">A4</option></select>
+        <select id="scaleSel" title="Text size"><option value="90">Text 90%</option><option value="95">Text 95%</option><option value="100">Text 100%</option><option value="105">Text 105%</option><option value="110">Text 110%</option></select>
+        <span class="grow"></span>
+        <button id="scoreBtn" class="score" title="Check my resume">Score –</button>
+        <button id="printBtn" class="primary">🖨 Print / PDF</button>
+      </div>
+      <div class="prev-info" id="prevInfo"></div>
+      <div class="paper-wrap" id="paperWrap"><div class="paper" id="paper"></div></div>
+    </section>
+  </main>
+
+  <!-- JOB MATCH -->
+  <main class="page" id="matchPane" hidden>
+    <div class="page-in">
+      <h1 class="ph">🎯 Job match <span class="pro-tag" id="matchTag">Pro</span></h1>
+      <p class="hint">Paste a job ad. ResumePress finds the important words in it and shows which ones your resume already has – the same idea applicant tracking systems (ATS) use to rank resumes. Everything stays on this PC.</p>
+      <div class="two">
+        <label class="field">Job title<input id="jmTitle" placeholder="e.g. Customer Service Representative"></label>
+        <label class="field">Company<input id="jmCompany" placeholder="e.g. Acme Corp"></label>
+      </div>
+      <label class="field">Job description<textarea id="jmText" rows="10" placeholder="Paste the full job ad here…"></textarea></label>
+      <div class="row-btns"><button id="jmRun" class="primary">Compare with “<span id="jmDocName"></span>”</button></div>
+      <div id="jmOut"></div>
+    </div>
+  </main>
+
+  <!-- APPLICATIONS -->
+  <main class="page" id="appsPane" hidden>
+    <div class="page-in wide-in">
+      <div class="ph-row"><h1 class="ph">📋 Applications</h1><span class="grow"></span><button id="addAppBtn" class="primary">＋ Add job</button></div>
+      <div class="app-stats" id="appStats"></div>
+      <div class="list-head"><select id="appFilter"><option value="">All</option></select><input id="appSearch" placeholder="Search company or role…"></div>
+      <div class="table-wrap"><table class="guests" id="appTable"></table></div>
+      <p class="hint" id="appHint"></p>
+    </div>
+  </main>
+
+  <!-- dialogs -->
+  <dialog id="tplDlg" class="dlg wide">
+    <h2>Choose a template</h2>
+    <div class="tpl-grid" id="tplGrid"></div>
+    <div class="row-btns"><button id="tplClose" class="ghost">Close</button></div>
+  </dialog>
+
+  <dialog id="scoreDlg" class="dlg">
+    <h2>Resume check</h2>
+    <div class="score-big" id="scoreBig"></div>
+    <ul class="checks" id="checkList"></ul>
+    <div class="row-btns"><button id="scoreClose" class="ghost">Close</button></div>
+  </dialog>
+
+  <dialog id="ideaDlg" class="dlg wide">
+    <h2 id="ideaTitle">Writing ideas</h2>
+    <div class="idea-tabs"><button data-i="examples" class="on">Example bullets</button><button data-i="verbs">Action verbs</button></div>
+    <div id="ideaExamples">
+      <label class="field">Job<select id="ideaJob"></select></label>
+      <p class="hint">Click a line to add it. Replace the [brackets] with your own numbers and details.</p>
+      <div id="ideaList" class="idea-list"></div>
+    </div>
+    <div id="ideaVerbs" hidden><p class="hint">Start every bullet with a strong verb. Click one to add it as a new line.</p><div id="verbList"></div></div>
+    <div class="row-btns"><button id="ideaClose" class="ghost">Done</button></div>
+  </dialog>
+
+  <dialog id="appDlg" class="dlg">
+    <h2 id="appDlgTitle">Job application</h2>
+    <div class="two"><label class="field">Company<input id="aCompany"></label><label class="field">Role<input id="aRole"></label></div>
+    <div class="two">
+      <label class="field">Status<select id="aStatus"></select></label>
+      <label class="field">Resume used<select id="aDoc"></select></label>
+    </div>
+    <div class="two"><label class="field">Applied on<input id="aApplied" type="date"></label><label class="field">Follow up on<input id="aFollow" type="date"></label></div>
+    <div class="two"><label class="field">Salary<input id="aSalary" placeholder="e.g. $55,000"></label><label class="field">Location<input id="aLocation"></label></div>
+    <label class="field">Job link<input id="aLink" placeholder="https://…"></label>
+    <label class="field">Contact person<input id="aContact" placeholder="Name, email or phone"></label>
+    <label class="field">Notes<textarea id="aNotes" rows="3"></textarea></label>
+    <div class="row-btns"><button id="aSave" class="primary">Save</button><button id="aDel" class="ghost danger">Delete</button><button id="aCancel" class="ghost">Cancel</button></div>
+  </dialog>
+
+  <dialog id="proDialog" class="dlg">
+    <h2>ResumePress Pro</h2>
+    <p class="muted">One-time purchase. Yours forever on this Microsoft account – no subscription, no surprise renewals. Online resume builders often charge around $24 every 4 weeks.</p>
+    <ul class="pro-list">
+      <li><strong>All 8 templates</strong> <span class="muted">(Free: Classic, Modern, Minimal)</span></li>
+      <li><strong>Unlimited resumes</strong> – a tailored copy for every job</li>
+      <li><strong>Cover letters</strong> that match your resume, with a first draft written from it</li>
+      <li><strong>Job match</strong> – see which keywords from the job ad your resume is missing</li>
+      <li><strong>Unlimited application tracking</strong> <span class="muted">(Free: 5 jobs)</span></li>
+      <li><strong>Export to Word</strong> (.doc)</li>
+    </ul>
+    <p id="proMsg" class="pro-msg" hidden></p>
+    <p id="trialInfo" class="pro-msg" hidden></p>
+    <div class="row-btns">
+      <button id="trialBtn" class="ghost" hidden>Try every Pro feature free for 7 days</button>
+      <button id="buyBtn" class="primary">Unlock Pro</button>
+      <button id="restoreBtn" class="ghost">Restore purchase</button>
+      <button id="closePro" class="ghost">Not now</button>
+    </div>
+  </dialog>
+
+  <div id="toast" class="toast" hidden></div>
+  <div id="printArea"></div>
+  <script src="content.js"></script>
+  <script src="templates.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
