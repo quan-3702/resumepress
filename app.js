@@ -22,6 +22,7 @@ const PRO_SKU = 'resumepress_pro';
 const PRO_IDS = [PRO_SKU];
 let STORE_URL = 'https://apps.microsoft.com/detail/9NRFXK36T685';
 let proAvailable = false, proSku = PRO_SKU, isPro = false;
+try { if ('getDigitalGoodsService' in window && localStorage.getItem('resumepress-proavail') === '1') proAvailable = true; } catch (_) {} // keep Pro limits when offline
 try { isPro = localStorage.getItem('resumepress-pro') === '1'; } catch (_) {}
 const TRIAL_DAYS = 7, DAY = 86400000;
 let trialStart = 0;
@@ -56,17 +57,26 @@ function setPro(v) {
   b.hidden = !proAvailable && !v;
   if (R) renderAll();
 }
+async function checkProAfterBuy() {
+  for (let i = 0; i < 6; i++) {
+    if (await checkPro()) return true;
+    await new Promise((r) => setTimeout(r, 1500));
+  }
+  proMessage('Thank you! If Pro is not unlocked within a minute, click “Restore purchase”.');
+  return false;
+}
 async function checkPro() {
   const svc = await billing();
   if (!svc) return false;
   try {
     const details = await svc.getDetails(PRO_IDS).catch(() => []);
-    proAvailable = details.length > 0;
+    if (details.length) { proAvailable = true; try { localStorage.setItem('resumepress-proavail', '1'); } catch (_) {} }
     if (details[0]) { proSku = details[0].itemId; if (!PRO_IDS.includes(proSku)) PRO_IDS.push(proSku); }
     const list = await svc.listPurchases();
     const owned = list.some((p) => PRO_IDS.includes(p.itemId));
-    setPro(owned);
-    return owned;
+    if (owned || details.length) { setPro(owned); return owned; }
+    setPro(isPro); // Store did not answer (offline): keep what we knew
+    return isPro;
   } catch (_) { return isPro; }
 }
 function proMessage(text) { const m = $('proMsg'); m.hidden = !text; m.textContent = text || ''; }
@@ -101,7 +111,7 @@ async function buyPro() {
     proMessage('Purchase could not be completed: ' + (e.message || e));
     return;
   }
-  if (await checkPro()) { proMessage('Thank you! Pro is unlocked. ★'); setTimeout(() => $('proDialog').close(), 1500); }
+  if (await checkProAfterBuy()) { proMessage('Thank you! Pro is unlocked. ★'); setTimeout(() => $('proDialog').close(), 1500); }
 }
 const needsPro = (why) => { if (unlocked()) return false; openPro(why); return true; };
 
@@ -221,7 +231,7 @@ function renderEditor() {
 function renderCoverEditor() {
   const p = 'cover.';
   $('editor').innerHTML = `<p class="order-hint">The cover letter uses the same template, colors and contact details as your resume.</p>
-  ${unlocked() ? '' : '<p class="pro-msg">Cover letters are part of ResumePress Pro. You can try everything free for 7 days.</p>'}
+  ${unlocked() ? '' : '<p class="pro-msg">Cover letters are part of ResumePress Pro. ' + (trialStart ? 'Your free trial has ended.' : 'You can try everything free for 7 days.') + '</p>'}
   <div class="ed-sec"><div class="ed-h"><b>Who it goes to</b></div><div class="ed-body"><div class="two">${inputHtml(p + 'recipient', 'Hiring manager', '', 'e.g. Ms. Jane Lee')}${inputHtml(p + 'recipientTitle', 'Their title')}</div>${inputHtml(p + 'company', 'Company')}${inputHtml(p + 'address', 'Address (optional)', 'area')}${inputHtml(p + 'date', 'Date', '', 'Leave empty for today')}</div></div>
   <div class="ed-sec"><div class="ed-h"><b>Letter</b></div><div class="ed-body">${inputHtml(p + 'greeting', 'Greeting')}<div class="row-btns"><button class="ghost" id="draftBtn">✨ Write a first draft from my resume</button></div><label class="field">Letter text (leave an empty line between paragraphs)<textarea data-p="${p}body" rows="16">${esc(R.cover.body || '')}</textarea></label>${inputHtml(p + 'closing', 'Closing')}</div></div>`;
 }
@@ -407,6 +417,8 @@ $('scoreClose').onclick = () => $('scoreDlg').close();
 // ---------- print / export ----------
 function doPrint() {
   if (tab === 'cover' && needsPro('Cover letters are part of ResumePress Pro.')) return;
+  const tpl = TEMPLATES.find((t) => t.id === R.template);
+  if (tpl && !tpl.free && needsPro(`The ${tpl.name} template is part of ResumePress Pro. To print for free, click 🎨 Template and choose Classic, Modern or Minimal – your text stays the same.`)) return;
   const [, , size] = PAGE[R.paper] || PAGE.letter;
   $('pageRule').textContent = `@page { size: ${size}; margin: 0.4in 0; } @page :first { margin-top: 0; } @media print { #printArea .resume { width: auto !important; } #printArea .resume.t-sidebar .r-cols, #printArea .resume.t-bold .r-top.band { -webkit-print-color-adjust: exact; } }`;
   $('printArea').innerHTML = (tab === 'cover' ? renderCover(R) : renderResume(R));
@@ -509,7 +521,7 @@ function showMatch() {
 $('jmOut').addEventListener('click', async (e) => {
   const k = e.target.closest('[data-kw]');
   if (k) { const name = k.dataset.kw.replace(/\b\w/g, (c) => c.toUpperCase()); if (!R.skills.some((s) => (s.name || '').toLowerCase() === k.dataset.kw)) R.skills.push({ id: uid('s'), name, level: 0 }); delete R.hide.skills; save(); showMatch(); toast(`Added “${name}” to your skills`); return; }
-  if (e.target.id === 'jmTailor') { await duplicateDoc(`${R.name} – ${lastMatch.company || lastMatch.title || 'tailored'}`); if (lastMatch.title && R.contact) { R.contact.title = lastMatch.title; } if (lastMatch.company) R.cover.company = lastMatch.company; if (lastMatch.title) R.cover.jobTitle = lastMatch.title; save(); lastMatch.doc = cur; setTab('resume'); toast('Tailored copy created – edit it for this job'); return; }
+  if (e.target.id === 'jmTailor') { if (!(await duplicateDoc(`${R.name} – ${lastMatch.company || lastMatch.title || 'tailored'}`))) return; if (lastMatch.title && R.contact) { R.contact.title = lastMatch.title; } if (lastMatch.company) R.cover.company = lastMatch.company; if (lastMatch.title) R.cover.jobTitle = lastMatch.title; save(); lastMatch.doc = cur; setTab('resume'); toast('Tailored copy created – edit it for this job'); return; }
   if (e.target.id === 'jmSaveApp') { openApp(null, { company: lastMatch.company, role: lastMatch.title, status: 'saved', doc: cur }); }
 });
 

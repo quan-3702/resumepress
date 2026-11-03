@@ -179,7 +179,7 @@ table.guests { width: 100%; border-collapse: collapse; }
 #appTable td.name { cursor: pointer; }
 
 @media (max-width: 900px) {
-  .pane { grid-template-columns: 1fr; grid-template-rows: auto auto; overflow: auto; }
+  .pane { grid-template-columns: minmax(0, 1fr); grid-template-rows: auto auto; overflow: auto; }
   .side { border-right: 0; overflow: visible; }
   .prev-col { min-height: 70vh; }
   #docPick { width: 140px; }
