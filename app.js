@@ -23,21 +23,40 @@ const PRO_IDS = [PRO_SKU];
 let STORE_URL = 'https://apps.microsoft.com/detail/9NRFXK36T685';
 let proAvailable = false, proSku = PRO_SKU, isPro = false;
 proAvailable = true; // owner's rule: Pro is never free – free limits apply everywhere (website, Store, offline) until Pro is bought
-try { isPro = localStorage.getItem('resumepress-pro') === '1'; } catch (_) {}
+// saved Pro flag: the website never trusts it (web visitors cannot buy there); the Store app trusts it for 30 days after the Store last confirmed the purchase
+const HAS_STORE = typeof window !== 'undefined' && 'getDigitalGoodsService' in window, PRO_OK_DAYS = 30;
+function cachedPro() {
+  try {
+    if (!HAS_STORE || localStorage.getItem('resumepress-pro') !== '1') return false;
+    const ok = localStorage.getItem('resumepress-pro-ok'), now = Date.now();
+    if (ok === null) { localStorage.setItem('resumepress-pro-ok', String(now)); return true; } // saved by an older version: counts as confirmed now, once
+    const t = Number(ok);
+    return t > 0 && t <= now + 86400000 && now - t < PRO_OK_DAYS * 86400000; // a date in the future or garbage is not trusted
+  } catch (_) { return false; }
+}
+function storePro(owned) { // only when the Store really answered
+  try { if (owned) { localStorage.setItem('resumepress-pro', '1'); localStorage.setItem('resumepress-pro-ok', String(Date.now())); } else { localStorage.removeItem('resumepress-pro'); localStorage.removeItem('resumepress-pro-ok'); } } catch (_) {}
+}
+isPro = cachedPro();
 const TRIAL_DAYS = 7, DAY = 86400000;
 let trialStart = 0;
-try { trialStart = Number(localStorage.getItem('resumepress-trial')) || 0; } catch (_) {}
-const trialLeft = () => (trialStart ? Math.max(0, Math.ceil((trialStart + TRIAL_DAYS * DAY - Date.now()) / DAY)) : 0);
+// a trial start in the future, NaN or garbage counts as an ended trial; of the two saved copies the earlier wins,
+// so clearing or rewriting only one of them never restarts the trial
+const trialVal = (v) => { if (v == null || v === '' || v === 0) return 0; const n = Number(v); return n > 0 && n <= Date.now() + DAY ? n : 1; };
+const firstTrial = (a, b) => (a && b ? Math.min(a, b) : a || b);
+try { trialStart = trialVal(localStorage.getItem('resumepress-trial')); } catch (_) {}
+const trialLeft = () => (trialStart && trialStart < Date.now() + DAY ? Math.max(0, Math.min(TRIAL_DAYS, Math.ceil((trialStart + TRIAL_DAYS * DAY - Date.now()) / DAY))) : 0); // a start date in the future (clock changed) does not extend the trial
 const trialActive = () => trialLeft() > 0;
 const unlocked = () => isPro || !proAvailable || trialActive();
 const FREE_DOCS = 1, FREE_APPS = 5;
 async function loadTrial() {
   const t = await dbGet('trial').catch(() => 0);
-  trialStart = Math.max(trialStart, Number(t) || 0);
+  trialStart = firstTrial(trialStart, trialVal(t));
   if (trialStart) { try { localStorage.setItem('resumepress-trial', String(trialStart)); } catch (_) {} dbSet('trial', trialStart).catch(() => {}); }
 }
 async function startTrial() {
-  if (trialStart) return;
+  await loadTrial(); // the IndexedDB copy counts too
+  if (trialStart) { openPro(''); return; }
   trialStart = Date.now();
   try { localStorage.setItem('resumepress-trial', String(trialStart)); } catch (_) {}
   await dbSet('trial', trialStart).catch(() => {});
@@ -50,7 +69,6 @@ async function billing() {
 }
 function setPro(v) {
   isPro = v;
-  try { localStorage.setItem('resumepress-pro', v ? '1' : '0'); } catch (_) {}
   const b = $('proBtn');
   b.textContent = proLabel();
   b.classList.toggle('is-pro', v || trialActive());
@@ -73,7 +91,7 @@ async function checkPro() {
     if (details[0]) { proSku = details[0].itemId; if (!PRO_IDS.includes(proSku)) PRO_IDS.push(proSku); }
     const list = await svc.listPurchases();
     const owned = list.some((p) => PRO_IDS.includes(p.itemId));
-    if (owned || details.length) { setPro(owned); return owned; }
+    if (owned || details.length) { storePro(owned); setPro(owned); return owned; }
     setPro(isPro); // Store did not answer (offline): keep what we knew
     return isPro;
   } catch (_) { return isPro; }
@@ -225,7 +243,7 @@ function renderEditor() {
     else if (k.startsWith('custom:')) { const s = R.custom.find((c) => 'custom:' + c.id === k); if (s) html += secBox(k, customEditor(s), s.items.length || ''); }
   });
   const hidden = R.order.filter((k) => R.hide[k]);
-  html += `<h2>Add a section</h2><div class="add-sec">${hidden.map((k) => `<button class="ghost" data-show="${k}">＋ ${esc(secTitle(k))}</button>`).join('')}<button class="ghost" id="addCustom">＋ Custom section…</button></div>`;
+  html += `<h2>Add a section</h2><div class="add-sec">${hidden.map((k) => `<button class="ghost" data-show="${k}">＋ ${esc(secTitle(k))}</button>`).join('')}<button class="ghost" id="addCustom">＋ Custom section…</button></div>` + FEEDBACK;
   $('editor').innerHTML = html;
 }
 function renderCoverEditor() {
@@ -233,10 +251,11 @@ function renderCoverEditor() {
   $('editor').innerHTML = `<p class="order-hint">The cover letter uses the same template, colors and contact details as your resume.</p>
   ${unlocked() ? '' : '<p class="pro-msg">Cover letters are part of ResumePress Pro. ' + (trialStart ? 'Your free trial has ended.' : 'You can try everything free for 7 days.') + '</p>'}
   <div class="ed-sec"><div class="ed-h"><b>Who it goes to</b></div><div class="ed-body"><div class="two">${inputHtml(p + 'recipient', 'Hiring manager', '', 'e.g. Ms. Jane Lee')}${inputHtml(p + 'recipientTitle', 'Their title')}</div>${inputHtml(p + 'company', 'Company')}${inputHtml(p + 'address', 'Address (optional)', 'area')}${inputHtml(p + 'date', 'Date', '', 'Leave empty for today')}</div></div>
-  <div class="ed-sec"><div class="ed-h"><b>Letter</b></div><div class="ed-body">${inputHtml(p + 'greeting', 'Greeting')}<div class="row-btns"><button class="ghost" id="draftBtn">✨ Write a first draft from my resume</button></div><label class="field">Letter text (leave an empty line between paragraphs)<textarea data-p="${p}body" rows="16">${esc(R.cover.body || '')}</textarea></label>${inputHtml(p + 'closing', 'Closing')}</div></div>`;
+  <div class="ed-sec"><div class="ed-h"><b>Letter</b></div><div class="ed-body">${inputHtml(p + 'greeting', 'Greeting')}<div class="row-btns"><button class="ghost" id="draftBtn">✨ Write a first draft from my resume</button></div><label class="field">Letter text (leave an empty line between paragraphs)<textarea data-p="${p}body" rows="16">${esc(R.cover.body || '')}</textarea></label>${inputHtml(p + 'closing', 'Closing')}</div></div>${FEEDBACK}`;
 }
 
 // ---------- preview ----------
+const FEEDBACK = '<p class="fb-note">💬 Something not working the way you want? Tell me – <a href="mailto:thequan03072002@gmail.com?subject=ResumePress%20feedback">thequan03072002@gmail.com</a>. I read every message and improve the app.</p>';
 const PAGE = { letter: [816, 1056, '8.5in 11in'], a4: [794, 1123, 'A4'] };
 let pages = 1;
 function docHtml() { return tab === 'cover' ? renderCover(R) : renderResume(R); }
@@ -253,6 +272,8 @@ function renderPreview() {
   pages = Math.max(1, Math.ceil((fullH - 4) / hgt));
   doc.style.minHeight = pages * hgt + 'px';
   for (let i = 1; i < pages; i++) { const d = document.createElement('div'); d.className = 'pbreak'; d.style.top = i * hgt + 'px'; d.innerHTML = `<span>Page ${i + 1}</span>`; paper.appendChild(d); }
+  const tpl = TEMPLATES.find((t) => t.id === R.template);
+  if (!unlocked() && (tab === 'cover' || (tpl && !tpl.free))) { const m = document.createElement('div'); m.className = 'preview-mark'; m.innerHTML = '<span>PREVIEW ★ Pro</span>'.repeat(pages * 8); paper.appendChild(m); } // on screen only: a Pro look is marked as a preview, so a screenshot is not the paid output
   const avail = $('paperWrap').clientWidth - 32;
   const s = Math.min(1, avail / w);
   paper.style.transform = `scale(${s})`;
@@ -429,6 +450,7 @@ function doPrint() {
   toast('In the print window choose “Save as PDF” (or “Microsoft Print to PDF”) to get a PDF file');
 }
 $('printBtn').onclick = doPrint;
+window.addEventListener('afterprint', () => { $('printArea').innerHTML = ''; }); // the browser's own print menu must not print an old page again
 $('printBtn2').onclick = () => { $('menu').hidden = true; if (tab !== 'resume' && tab !== 'cover') setTab('resume'); doPrint(); };
 function download(name, data, type) {
   const a = document.createElement('a'); const url = URL.createObjectURL(new Blob([data], { type }));

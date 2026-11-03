@@ -191,3 +191,9 @@ table.guests { width: 100%; border-collapse: collapse; }
   .top-btns { margin-left: auto; }
   .prev-bar .swatches { order: 9; width: 100%; }
 }
+
+/* feedback note */
+.fb-note { color: var(--muted); font-size: 12px; font-weight: 400; line-height: 1.45; margin: 14px 0 4px; overflow-wrap: anywhere; }
+.fb-note a { color: inherit; text-decoration: underline; }
+.paper .preview-mark { position: absolute; inset: 0; z-index: 4; pointer-events: none; overflow: hidden; display: flex; flex-wrap: wrap; align-content: space-around; justify-content: space-around; }
+.paper .preview-mark span { transform: rotate(-25deg); font: 800 46px/1 'Segoe UI', Arial, sans-serif; color: rgba(225, 29, 72, .2); padding: 40px 20px; white-space: nowrap; }
