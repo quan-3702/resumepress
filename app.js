@@ -22,7 +22,7 @@ const PRO_SKU = 'resumepress_pro';
 const PRO_IDS = [PRO_SKU];
 let STORE_URL = 'https://apps.microsoft.com/detail/9NRFXK36T685';
 let proAvailable = false, proSku = PRO_SKU, isPro = false;
-try { if ('getDigitalGoodsService' in window && localStorage.getItem('resumepress-proavail') === '1') proAvailable = true; } catch (_) {} // keep Pro limits when offline
+proAvailable = true; // owner's rule: Pro is never free – free limits apply everywhere (website, Store, offline) until Pro is bought
 try { isPro = localStorage.getItem('resumepress-pro') === '1'; } catch (_) {}
 const TRIAL_DAYS = 7, DAY = 86400000;
 let trialStart = 0;
@@ -70,7 +70,6 @@ async function checkPro() {
   if (!svc) return false;
   try {
     const details = await svc.getDetails(PRO_IDS).catch(() => []);
-    if (details.length) { proAvailable = true; try { localStorage.setItem('resumepress-proavail', '1'); } catch (_) {} }
     if (details[0]) { proSku = details[0].itemId; if (!PRO_IDS.includes(proSku)) PRO_IDS.push(proSku); }
     const list = await svc.listPurchases();
     const owned = list.some((p) => PRO_IDS.includes(p.itemId));
@@ -91,6 +90,7 @@ async function openPro(reason) {
     $('restoreBtn').hidden = false;
     try {
       const [d] = await svc.getDetails([proSku]);
+      if (!d) proMessage((reason ? reason + ' ' : '') + 'Pro is being added to the Microsoft Store and will be on sale very soon – please check again in a day or two.');
       const price = d && d.price ? new Intl.NumberFormat(undefined, { style: 'currency', currency: d.price.currency }).format(Number(d.price.value)) : '';
       $('buyBtn').textContent = price ? `Unlock Pro – ${price}` : 'Unlock Pro';
     } catch (_) { $('buyBtn').textContent = 'Unlock Pro'; }
@@ -416,6 +416,7 @@ $('scoreClose').onclick = () => $('scoreDlg').close();
 
 // ---------- print / export ----------
 function doPrint() {
+  if (!unlocked() && docs.findIndex((d) => d.id === cur) >= FREE_DOCS && needsPro('The free version holds one resume. You can view, copy out or delete this one – Pro prints every resume.')) return;
   if (tab === 'cover' && needsPro('Cover letters are part of ResumePress Pro.')) return;
   const tpl = TEMPLATES.find((t) => t.id === R.template);
   if (tpl && !tpl.free && needsPro(`The ${tpl.name} template is part of ResumePress Pro. To print for free, click 🎨 Template and choose Classic, Modern or Minimal – your text stays the same.`)) return;
@@ -612,7 +613,20 @@ async function restoreBackup(file) {
   try {
     const o = JSON.parse(await file.text());
     if (o.app !== 'resumepress' || !Array.isArray(o.docs)) throw new Error('not a ResumePress backup');
-    if (!confirm(`Restore ${o.docs.length} resume(s) and ${(o.jobs || []).length} application(s)? They are added next to what you have now.`)) return;
+    let replace = false;
+    if (!unlocked()) {
+      const have0 = new Set(jobs.map((j) => j.id)), nJobs = jobs.length + (o.jobs || []).filter((j) => j && !have0.has(j.id)).length;
+      if (o.docs.length > FREE_DOCS || (o.docs.length && docs.length > FREE_DOCS) || nJobs > Math.max(FREE_APPS, jobs.length)) {
+        openPro(`This backup holds ${o.docs.length} resume${o.docs.length === 1 ? '' : 's'} and ${(o.jobs || []).length} tracked job${(o.jobs || []).length === 1 ? '' : 's'}. The free version keeps ${FREE_DOCS} resume and ${FREE_APPS} jobs – Pro opens all of it. The backup file is unchanged, so nothing is lost.`);
+        return;
+      }
+      if (o.docs.length) {
+        if (!confirm('The free version holds one resume. Replace your current resume with the one in this backup? (Unlock Pro to keep both.)')) return;
+        replace = true;
+        o.docs.forEach((d) => { const t = d.data && TEMPLATES.find((x) => x.id === d.data.template); if (t && !t.free) d.data.template = 'modern'; });
+      } else if (!confirm(`Restore ${(o.jobs || []).length} application(s)? They are added next to what you have now.`)) return;
+    } else if (!confirm(`Restore ${o.docs.length} resume(s) and ${(o.jobs || []).length} application(s)? They are added next to what you have now.`)) return;
+    if (replace) { const d = o.docs[0]; R = normalize(d.data); R.name = d.name || R.name; docs.find((x) => x.id === cur).name = R.name; await saveNow(); o.docs = []; }
     for (const d of o.docs) { const id = uid('r'); docs.push({ id, name: d.name || 'Restored resume' }); await dbSet('r:' + id, normalize(d.data)); }
     await dbSet('docs', docs);
     const have = new Set(jobs.map((j) => j.id)); (o.jobs || []).forEach((j) => { if (!have.has(j.id)) jobs.push(j); }); await dbSet('jobs', jobs);
